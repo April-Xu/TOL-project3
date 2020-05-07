@@ -5,6 +5,7 @@
     <title>Learnersourcing Quiz</title>
     <link rel="stylesheet" href="style.css">
     <script type="text/javascript">
+        retry = 0;
         let requestURL = 'content.json';
         let request = new XMLHttpRequest();
         request.open('GET', requestURL);
@@ -12,42 +13,97 @@
         request.send();
 
         request.onload = function() {
-            let contentText = request.response;
-            let content = JSON.parse(contentText);
+            contentText = request.response;
+            content = JSON.parse(contentText);
             // let content = request.response;
-            let question = content['questions'];
+            question = content['q_list'][0];
 
             let optionA = document.getElementById('optionA');
             let optionB = document.getElementById('optionB');
             let optionC = document.getElementById('optionC');
             let optionD = document.getElementById('optionD');
 
-            correctAnswer = question[0].correct_answer;
+            correctAnswer = question[2].correct_answer;
 
-            optionA.innerHTML = question[0].A_q;
-            optionB.innerHTML = question[0].B_q;
-            optionC.innerHTML = question[0].C_q;
-            optionD.innerHTML = question[0].D_q;
+            optionA.innerHTML = question[2].A_q;
+            optionB.innerHTML = question[2].B_q;
+            optionC.innerHTML = question[2].C_q;
+            optionD.innerHTML = question[2].D_q;
         };
 
         function getAnswer() {
             radio = document.getElementsByName("question");
             select = false;
 
+            tempAnswer = [];
+            for (i = 0; i < correctAnswer.length; i++){
+                tempAnswer.push(correctAnswer[i]);
+            }
+
+            answerNum = tempAnswer.length;
+
             for (i = 0; i < radio.length; i++) {
                 if (radio[i].checked) {
                     select = true;
-                    if (radio[i].value === correctAnswer) {
-                        document.getElementById("question").style.display="none";
-                        document.getElementById("Correct").style.display="block";
+                    if (tempAnswer.length === 0) {
+                        break
                     } else {
-                        document.getElementById("question").style.display="none";
-                        document.getElementById("Wrong").style.display="block";
+                        for (j = 0; j < tempAnswer.length; j++) {
+                            if (radio[i].value === tempAnswer[j]) {
+                                tempAnswer.splice(j, 1);
+                            }
+                        }
                     }
                 }
             }
 
+
+            if (tempAnswer.length === 0) {
+                document.getElementById("question").style.display="none";
+                document.getElementById("Correct").style.display="block";
+            } else if (tempAnswer.length === answerNum) {
+                document.getElementById("question").style.display="none";
+                document.getElementById("Wrong").style.display="block";
+            } else {
+                document.getElementById("question").style.display="none";
+                document.getElementById("Notreally").style.display="block";
+            }
+
             if (select === false) alert("Please select an answer!");
+        }
+
+        function retake() {
+            retry += 1;
+            if (retry === content['q_list'].length) {
+                retry = 0;
+            }
+
+            question = content['q_list'][retry];
+
+            optionA = document.getElementById('optionA');
+            optionB = document.getElementById('optionB');
+            optionC = document.getElementById('optionC');
+            optionD = document.getElementById('optionD');
+
+            correctAnswer = question[2].correct_answer;
+
+            optionA.innerHTML = question[2].A_q;
+            optionB.innerHTML = question[2].B_q;
+            optionC.innerHTML = question[2].C_q;
+            optionD.innerHTML = question[2].D_q;
+
+            radio = document.getElementsByName("question");
+
+            for (i = 0; i < radio.length; i++) {
+                if (radio[i].checked) {
+                    radio[i].checked = false;
+                }
+            }
+
+            document.getElementById("question").style.display="block";
+            document.getElementById("Correct").style.display="none";
+            document.getElementById("Notreally").style.display="none";
+            document.getElementById("Wrong").style.display="none";
         }
     </script>
 </head>
@@ -58,13 +114,15 @@
             of practice, he mastered playing his favorite song. Write one growth-mindset building
             feedback his instructor could give him.</div>
         <br><br>
-        <input type="radio" name="question" value="A"><label id="optionA"></label>
-        <br><br><br>
-        <input type="radio" name="question" value="B"><label id="optionB"></label>
-        <br><br><br>
-        <input type="radio" name="question" value="C"><label id="optionC"></label>
-        <br><br><br>
-        <input type="radio" name="question" value="D"><label id="optionD"></label>
+        <div class="option">
+            <input type="checkbox" name="question" value="A"><label id="optionA"></label>
+            <br><br><br>
+            <input type="checkbox" name="question" value="B"><label id="optionB"></label>
+            <br><br><br>
+            <input type="checkbox" name="question" value="C"><label id="optionC"></label>
+            <br><br><br>
+            <input type="checkbox" name="question" value="D"><label id="optionD"></label>
+        </div>
         <div style="margin-top: 6%; text-align: center;">
             <img src="images/submit.png" style="cursor: pointer;" onclick="getAnswer()">
         </div>
@@ -73,14 +131,13 @@
 <div class="background" id="Correct" style="display:none;">
     <div class="feedback">
         <br><br><br>
-        Unfortunately you are wrong. 1 time per day is not enough.
         <br><br>
-        You should at least brush twice a day to reach the threshold frequency.
+        Congratulations! You got all answers correct.
         <br><br>
-        Besides, you need to reach the threshold duration but not necessary to brush too long.
         <br><br><br>
         <div style="margin-top: 6%; text-align: center;">
-            <a onclick="location.reload()" style="cursor:pointer; margin-right: 50px;"><img src="images/retry.png"></a>
+            <a onclick="retake()" style="cursor:pointer; margin-right: 50px;"><img
+                    src="images/retry.png"></a>
             <a href="q4.html"><img src="images/next-question.png"></a>
         </div>
     </div>
@@ -88,12 +145,25 @@
 <div class="background" id="Wrong" style="display:none;">
     <div class="feedback">
         <br><br><br>
-        Congratulations!
         <br><br>
-        You need to reach the threshold frequency and duration to ensure your teeth are thoroughly cleaned.
+        Unfortunately, you didn't get any of the answer correct.
         <br><br><br>
         <div style="margin-top: 6%; text-align: center;">
-            <a onclick="location.reload()" style="cursor:pointer; margin-right: 50px;"><img src="images/retry.png"></a>
+            <a onclick="retake()" style="cursor:pointer; margin-right: 50px;"><img
+                    src="images/retry.png"></a>
+            <a href="q4.html"><img src="images/next-question.png"></a>
+        </div>
+    </div>
+</div>
+<div class="background" id="Notreally" style="display:none;">
+    <div class="feedback">
+        <br><br><br>
+        <br><br>
+        Not really. You got one of the answers correct but there are at least one correct answer.
+        <br><br><br>
+        <div style="margin-top: 6%; text-align: center;">
+            <a onclick="retake()" style="cursor:pointer; margin-right: 50px;"><img
+                    src="images/retry.png"></a>
             <a href="q4.html"><img src="images/next-question.png"></a>
         </div>
     </div>
